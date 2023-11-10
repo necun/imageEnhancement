@@ -1,13 +1,17 @@
 import cv2
 import numpy as np
 from PIL import Image,ImageEnhance
+from io import BytesIO
+from fastapi import FastAPI,File,UploadFile
+from fastapi.responses import FileResponse
 
-
-input_image = cv2.imread("D:\IITH/Necun\Opencv\INPUTS/13.jpeg", cv2.IMREAD_GRAYSCALE)
+app=FastAPI()
 
 def Local_Adaptive_Thresholding(image):
     return  cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 3)
-
+def illumination_adjustment(image):
+    enhanced_image=cv2.convertScaleAbs(image, alpha=1.5, beta=30)
+    return enhanced_image
 def horizontal_noise(image):# (between text lines)
     horizontal_projection = cv2.reduce(image, 0, cv2.REDUCE_SUM, dtype=cv2.CV_32S)
     threshold_value = 0.2 * max(horizontal_projection)
@@ -46,13 +50,24 @@ def sharpen(image):
     filled_image = cv2.inpaint(image, sharpened_img, 0.5,cv2.INPAINT_NS)
     return filled_image
 
-binary_image=Local_Adaptive_Thresholding(input_image)
-binary_image=horizontal_noise(binary_image)
-binary_image=vertical_noise(binary_image)
-binary_image=median_filter(binary_image,kernel_size=5)
-binary_image= font_thinner(binary_image)
-binary_image=sharpen(binary_image)
-#binary_image=inversion(binary_image)#inverted input for OCR
+@app.get('/')
+async def root():
+    return {'Title':'Image enchancement'}
 
-cv2.imwrite('D:\IITH/Necun\imageEnhancement\Outputs/binary_image.png',binary_image)
-cv2.waitKey(0)
+@app.post('/upload/')
+async def input(file:UploadFile):
+    contents = await file.read()
+    image = Image.open(BytesIO(contents)).convert("L")  # Convert to grayscale
+    input_image = np.array(image)
+    binary_image = Local_Adaptive_Thresholding(input_image)
+    binary_image = horizontal_noise(binary_image)
+    binary_image = vertical_noise(binary_image)
+    binary_image = median_filter(binary_image, kernel_size=5)
+    binary_image = font_thinner(binary_image)
+    binary_image = sharpen(binary_image)
+    # binary_image=inversion(binary_image)#inverted input for OCR
+    output_path = 'D:\IITH/Necun\imageEnhancement\Outputs/binary_image.png'
+    cv2.imwrite(output_path, binary_image)
+    return FileResponse(output_path)
+
+
