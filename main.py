@@ -50,4 +50,3 @@ image1 = apply_sharp_black_filter(image1)
 image1 = grayscale(image1)
 # Save the enhanced image
 cv2.imwrite('C:/Users/DELL/Downloads/enhanced_image22.jpg', image1)
-
