@@ -68,6 +68,21 @@ def sharpen(image):
     filled_image = cv2.inpaint(image, sharpened_img, 0.5,cv2.INPAINT_NS)
     return filled_image
 
+# Deskew image
+def deskew(image):
+    dilate = cv2.dilate(image, cv2.getStructuringElement(cv2.MORPH_RECT, (30, 5)), iterations=5)
+    contours, hierarchy = cv2.findContours(dilate, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    contours = sorted(contours, key=cv2.contourArea)
+    largestContour = contours[0]
+    minAreaRect = cv2.minAreaRect(largestContour)
+    angle = minAreaRect[-1]
+    (h, w) = image.shape[:2]
+    center = (w // 2, h // 2)
+    M = cv2.getRotationMatrix2D(center, -1.0 * angle, 1.0)
+    image = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+    return image
+
+
 @app.get('/')
 async def root():
     return {'Title':'Image enchancement'}
@@ -79,6 +94,7 @@ async def input(file:UploadFile):
     input_image = np.array(image)
     input_image=illumination_adjustment(input_image)
     input_image = Local_Adaptive_Thresholding(input_image)
+    input_image=deskew(input_image)
     #binary_image = horizontal_noise(binary_image)
     #binary_image = vertical_noise(binary_image)
     input_image=whole_noise(input_image)
