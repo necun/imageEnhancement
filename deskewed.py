@@ -1,12 +1,8 @@
 import cv2
 import numpy as np
 from PIL import Image,ImageEnhance
-from io import BytesIO
-from fastapi import FastAPI,File,UploadFile
-from fastapi.responses import FileResponse
 import pytesseract
 
-app=FastAPI()
 
 def illumination_adjustment(image):
     enhanced_image=cv2.convertScaleAbs(image, alpha=1.5, beta=30)
@@ -69,41 +65,39 @@ def sharpen(image):
     filled_image = cv2.inpaint(image, sharpened_img, 0.5,cv2.INPAINT_NS)
     return filled_image
 
-# Deskew image
-def deskew_with_tesseract(image):
-    custom_config = r'--oem 3 --psm 6'  # Page segmentation mode for orientation detection
-    text = pytesseract.image_to_osd(image, config=custom_config)
-    orientation = text.split('Orientation in degrees: ')[1].split('\n')[0]
-    angle = int(orientation)
+def deskew(image):
+    edges = cv2.Canny(image, 50, 150, apertureSize=3)
+    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 100, minLineLength=100, maxLineGap=10)
+
+    angles = []
+
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        angle = np.arctan2(y2 - y1, x2 - x1)
+        angles.append(angle)
+
+    median_angle = np.degrees(np.median(angles))
+    rotation_angle = -(90 + median_angle) if median_angle < -45 else -median_angle
+
     (h, w) = image.shape[:2]
     center = (w // 2, h // 2)
-    M = cv2.getRotationMatrix2D(center, angle, 1.0)
+    M = cv2.getRotationMatrix2D(center, rotation_angle, 1.0)
     rotated_image = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+
     return rotated_image
 
 
-
-@app.get('/')
-async def root():
-    return {'Title':'Image enchancement'}
-
-@app.post('/upload/')
-async def input(file:UploadFile):
-    contents = await file.read()
-    image = Image.open(BytesIO(contents)).convert("L")  # Convert to grayscale
-    input_image = np.array(image)
-    input_image=illumination_adjustment(input_image)
-    input_image = Local_Adaptive_Thresholding(input_image)
-    input_image=deskew(input_image)
-    #binary_image = horizontal_noise(binary_image)
-    #binary_image = vertical_noise(binary_image)
-    input_image=whole_noise(input_image)
-    input_image = median_filter(input_image, kernel_size=5)
-    input_image = font_thinner(input_image)
-    input_image = saturation_sharpness(input_image)
-    # binary_image=inversion(binary_image)#inverted input for OCR
-    output_path = 'D:\IITH/Necun\imageEnhancement\Outputs/binary_image.png'
-    cv2.imwrite(output_path, input_image)
-    return FileResponse(output_path)
+input_image = cv2.imread("D:\IITH/Necun\imageEnhancement\Inputs/13.jpeg", cv2.IMREAD_GRAYSCALE)
+binary_image = Local_Adaptive_Thresholding(input_image)
+binary_image = deskew(binary_image)
+binary_image = horizontal_noise(binary_image)
+binary_image = vertical_noise(binary_image)
+binary_image = median_filter(binary_image, kernel_size=5)
+binary_image = font_thicker(binary_image)
+binary_image = sharpen(binary_image)
+# binary_image=inversion(binary_image)#inverted input for OCR
+output_path = 'D:\IITH/Necun\imageEnhancement\Outputs/binary_image_deskew.png'
+cv2.imwrite(output_path, binary_image)
+cv2.waitKey(0)
 
 
