@@ -9,7 +9,7 @@ import pytesseract
 app=FastAPI()
 
 def illumination_adjustment(image):
-    enhanced_image=cv2.convertScaleAbs(image, alpha=1.5, beta=30)
+    enhanced_image=cv2.convertScaleAbs(image, alpha=1.5, beta=15)
     return enhanced_image
 
 def Local_Adaptive_Thresholding(image):
@@ -53,10 +53,13 @@ def saturation_sharpness(image):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     hsv[..., 1] = hsv[..., 1] * 1.5  # Increase saturation
     enhanced_image = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    return enhanced_image
+
+def sharpness_without_pillow(image):
     kernel = np.array([[-1, -1, -1],
                        [-1, 9, -1],
                        [-1, -1, -1]])
-    enhanced_image = cv2.filter2D(enhanced_image, -1, kernel)
+    enhanced_image = cv2.filter2D(image, -1, kernel)
     return enhanced_image
 
 def sharpen(image):
