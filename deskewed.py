@@ -126,7 +126,7 @@ def dewarping(image):
 
 input_image = cv2.imread("D:\IITH/Necun\imageEnhancement\Inputs/13.jpeg", cv2.IMREAD_GRAYSCALE)
 binary_image = Local_Adaptive_Thresholding(input_image)
-binary_image = deskew(binary_image)
+#binary_image = deskew(binary_image)
 binary_image = dewarping(binary_image)
 binary_image = horizontal_noise(binary_image)
 binary_image = vertical_noise(binary_image)

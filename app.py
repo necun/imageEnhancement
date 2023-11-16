@@ -81,5 +81,3 @@ async def input(file:UploadFile):
     output_path = 'D:\IITH/Necun\imageEnhancement\Outputs/binary_image.png'
     cv2.imwrite(output_path, binary_image)
     return FileResponse(output_path)
-
-
