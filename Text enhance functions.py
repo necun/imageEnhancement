@@ -127,3 +127,64 @@ cv2.imshow('thresh_img',threshold_array)
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+
+"""
+ret,th = cv2.threshold(img,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+
+kernel = np.ones((3,3),np.uint8)   # 3x3 kernel with all ones.
+erosion = cv2.erode(th,kernel,iterations = 1)  #Erodes pixels based on the kernel defined
+
+dilation = cv2.dilate(erosion,kernel,iterations = 1)  #Apply dilation after erosion to see the effect.
+
+#Erosion followed by dilation can be a single operation called opening
+opening = cv2.morphologyEx(th, cv2.MORPH_OPEN, kernel)  # Compare this image with the previous one
+
+#Closing is opposit, dilation followed by erosion.
+closing = cv2.morphologyEx(th, cv2.MORPH_CLOSE, kernel)
+
+#Morphological gradient. This is the difference between dilation and erosion of an image
+gradient = cv2.morphologyEx(th, cv2.MORPH_GRADIENT, kernel)
+
+#It is the difference between input image and Opening of the image.
+tophat = cv2.morphologyEx(th, cv2.MORPH_TOPHAT, kernel)
+
+#It is the difference between the closing of the input image and input image.
+blackhat = cv2.morphologyEx(img, cv2.MORPH_BLACKHAT, kernel)
+
+cv2.imshow("Original Image", blackhat)
+cv2.waitKey(0)
+cv2.destroyAllWindows()"""
+
+#Works well for random gaussian noise but not as good for salt and pepper
+
+"""
+import cv2
+import numpy as np
+from skimage import io, img_as_float
+from skimage.restoration import denoise_tv_chambolle
+from matplotlib import pyplot as plt
+
+img = img_as_float(io.imread('images/BSE_25sigma_noisy.jpg', as_gray=True))
+
+
+plt.hist(img.flat, bins=100, range=(0,1))  #.flat returns the flattened numpy array (1D)
+
+
+denoise_img = denoise_tv_chambolle(img, weight=0.1, eps=0.0002, n_iter_max=200, multichannel=False)
+
+
+denoise_tv_chambolle(image, weight=0.1, eps=0.0002, n_iter_max=200, multichannel=False)
+weight: The greater weight, the more denoising (at the expense of fidelity to input).
+eps: Relative difference of the value of the cost function that determines the stop criterion. 
+n_iter_max: Max number of iterations used for optimization
+
+
+
+
+plt.hist(denoise_img.flat, bins=100, range=(0,1))  #.flat returns the flattened numpy array (1D)
+
+
+cv2.imshow("Original", img)
+cv2.imshow("TV Filtered", denoise_img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()"""

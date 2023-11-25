@@ -71,7 +71,6 @@ async def input(file:UploadFile):
     image = Image.open(BytesIO(contents)).convert("L")  # Convert to grayscale
     input_image = np.array(image)
     binary_image = Local_Adaptive_Thresholding(input_image)
-    binary_image = deskew(binary_image)
     binary_image = horizontal_noise(binary_image)
     binary_image = vertical_noise(binary_image)
     binary_image = median_filter(binary_image, kernel_size=5)
